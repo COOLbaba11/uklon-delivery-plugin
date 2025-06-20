@@ -82,9 +82,7 @@
       try {
         const response = await fetch("https://deliverygateway.staging.uklon.com.ua/api/v1/auth", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             "app_uid": "a4438450-f54e-40bf-99dd-517b7cbaddb1",
             "client_id": "3d023b57ea90477f89c3a2b370da0dc6",
@@ -92,8 +90,9 @@
           })
         });
         const data = await response.json();
-        if(data && data.token) {
-          accessToken = data.token;
+        // Перевірка наявності токена (як data.token, так і data.access_token)
+        if (data && (data.token || data.access_token)) {
+          accessToken = data.token || data.access_token;
           authStatus.innerText = "Аутентифікація пройшла успішно.";
           orderForm.classList.remove("hidden");
           log("Отримано токен: " + accessToken);
@@ -116,9 +115,7 @@
       }
       try {
         const response = await fetch(`https://deliverygateway.staging.uklon.com.ua/api/v1/addresses/autocomplete?query=${encodeURIComponent(query)}`, {
-          headers: {
-            "Authorization": "Bearer " + accessToken
-          }
+          headers: { "Authorization": "Bearer " + accessToken }
         });
         const suggestions = await response.json();
         const addressesSelect = document.getElementById("addressesSelect");
@@ -126,7 +123,6 @@
         if (suggestions && suggestions.length > 0) {
           suggestions.forEach(address => {
             const opt = document.createElement("option");
-            // За умови, що API повертає рядкове представлення адреси
             opt.value = address;
             opt.innerText = address;
             addressesSelect.appendChild(opt);
@@ -158,9 +154,7 @@
       }
       try {
         const response = await fetch(`https://deliverygateway.staging.uklon.com.ua/api/v1/addresses/${encodeURIComponent(selectedAddress)}`, {
-          headers: {
-            "Authorization": "Bearer " + accessToken
-          }
+          headers: { "Authorization": "Bearer " + accessToken }
         });
         addressDetails = await response.json();
         document.getElementById("addressDetailsDiv").classList.remove("hidden");
@@ -185,9 +179,7 @@
       }
       try {
         const response = await fetch(`https://deliverygateway.staging.uklon.com.ua/api/v1/cities/${encodeURIComponent(city)}/products`, {
-          headers: {
-            "Authorization": "Bearer " + accessToken
-          }
+          headers: { "Authorization": "Bearer " + accessToken }
         });
         const products = await response.json();
         const productsSelect = document.getElementById("productsSelect");
@@ -195,7 +187,6 @@
         if (products && products.length > 0) {
           products.forEach(product => {
             const opt = document.createElement("option");
-            // Припускаємо, що кожен продукт містить id та name
             opt.value = product.id;
             opt.innerText = product.name;
             productsSelect.appendChild(opt);
@@ -210,7 +201,6 @@
               : {};
             log("Обраний продукт: " + JSON.stringify(selectedProduct));
           });
-          // Показ кнопки для прорахунку вартості доставки
           document.getElementById("fareDiv").classList.remove("hidden");
         } else {
           alert("Продукти не знайдено для цього міста.");
@@ -227,11 +217,9 @@
         alert("Спочатку оберіть адресу та продукт.");
         return;
       }
-      // Формування даних для естимації – payload можна доповнити іншими обов'язковими полями згідно з документацією
       const payload = {
         address: selectedAddress,
         product_id: selectedProduct.id
-        // Наприклад, можна додати: weight, dimensions тощо
       };
       try {
         const response = await fetch("https://deliverygateway.staging.uklon.com.ua/api/v1/fares/estimate", {
@@ -263,7 +251,6 @@
         address: selectedAddress,
         product_id: selectedProduct.id,
         fare: estimatedFare
-        // Обов'язкові поля, наприклад: контактний телефон, бажаний час доставки тощо
       };
       try {
         const response = await fetch("https://deliverygateway.staging.uklon.com.ua/api/v1/orders", {
@@ -279,7 +266,6 @@
           orderId = orderResponse.orderId;
           log("Замовлення створено, orderId: " + orderId);
           document.getElementById("orderInfoDiv").classList.remove("hidden");
-          // Після створення замовлення отримуємо детальну інформацію
           getOrderInfo(orderId);
         } else {
           alert("Не вдалося створити замовлення.");
@@ -294,9 +280,7 @@
     async function getOrderInfo(orderId) {
       try {
         const response = await fetch(`https://deliverygateway.staging.uklon.com.ua/api/v1/orders/${orderId}`, {
-          headers: {
-            "Authorization": "Bearer " + accessToken
-          }
+          headers: { "Authorization": "Bearer " + accessToken }
         });
         const orderInfo = await response.json();
         document.getElementById("orderInfo").innerText = JSON.stringify(orderInfo, null, 2);
